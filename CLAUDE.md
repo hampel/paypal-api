@@ -36,6 +36,10 @@ client that could refund would be one bug from doing so.
 Adding one is a scope change, not an omission to fill in. It also changes the harness, whose guard
 design assumes nothing it runs has an effect — see The harness.
 
+**The read-only boundary is this package's, not the credential's.** A sandbox app's token measured
+on 2026-09-15 carried thirty scopes, refunds, payouts and subscriptions among them. Nothing about the
+token stops it moving money; only the absence of the code does.
+
 **Why not `paypal/paypal-server-sdk`**, PayPal's only maintained PHP SDK, checked at 2.4.0 on
 2026-09-15: it is not PSR-18 (APIMatic-generated, over `apimatic/unirest-php` and curl, invisible
 to `Http::fake()`), it has no webhook verification, and it installs ten packages and 8 MB including
@@ -67,19 +71,34 @@ bug.
 body can fail verification, so `WebhookNotification` keeps the raw body and
 `verificationPayload()` splices it in verbatim.
 
+## Measured
+
+Against a sandbox app, with the harness. Where a docblock says "measured", it means one of these.
+
+### Tokens — `token`, 2026-09-15
+
+- **`expires_in` is about 32400** — nine hours, not the 31668 of PayPal's sample. The run printed
+  32399 seconds left moments after issue.
+- **A second token request while the first is unexpired answers the same token.** Processes without
+  a shared `TokenStore` cost requests, not extra tokens — and `ClientCredentials::forget()` cannot
+  force a token with new scopes before the old one expires.
+- **`AccessGrant::TRANSACTION_SEARCH_SCOPE` is present** on an app with Transaction Search ticked,
+  among thirty scopes. An app without the feature has not been seen, so its absence there is still
+  inferred.
+- **A wrong secret answers 401 `{"error": "invalid_client", "error_description": "Client
+  Authentication failed"}`** and nothing else; `NotAuthenticatedException::oauthError()` reads it.
+  The response carries `PayPal-Debug-Id` and no rate-limit header.
+
 ## Documented, not measured
 
-**Nothing about this API has been measured yet.** Every behaviour the code relies on comes from the
-specifications or PayPal's reference pages, and the harness was written to settle the list below
-against a sandbox app. When an exercise settles one, move it into a `Measured` section with its
-date, correct the docblock that states it, and `git grep` the whole tree for the claim — the
-stale copy is always in a file you were not editing.
+Every other behaviour the code relies on comes from the specifications or PayPal's reference pages,
+and the harness was written to settle the list below against a sandbox app. When an exercise
+settles one, move it into Measured with its date, correct the docblock that states it, and
+`git grep` the whole tree for the claim — the stale copy is always in a file you were not editing.
 
 | question | code that assumes an answer | exercise |
 |---|---|---|
-| a token's real lifetime; whether a second request reissues the same token | `AccessGrant`, `TokenStore` docblock | `token` |
-| whether `AccessGrant::TRANSACTION_SEARCH_SCOPE` is the scope a Transaction Search app gets | `canSearchTransactions()` | `token` |
-| what a wrong secret answers | `NotAuthenticatedException::oauthError()` | `token` |
+| whether a token requested after the app's features change carries the new scopes before the old token expires | `AccessGrant`, `NotPermittedException` docblocks | none — needs a dashboard change |
 | whether 31 days is the limit, and 500 the largest page | `Transactions::MAX_RANGE_DAYS`, `TransactionPage::MAX_PAGE_SIZE` | `transactions` |
 | **whether `end_date` is inclusive** | the one-second step in `Transactions::windows()` | `transactions` |
 | whether a response's `page` counts from zero | `TransactionPage::$reportedPage` is kept, not trusted | `transactions` |

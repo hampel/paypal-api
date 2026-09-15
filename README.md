@@ -59,7 +59,7 @@ credentials and transactions, and a client says which it means.
 ## Authentication
 
 A REST app's client id and secret, from the Apps & Credentials page of PayPal's developer
-dashboard, are exchanged for a bearer token that lasts several hours. `ClientCredentials` obtains
+dashboard, are exchanged for a bearer token that lasts nine hours. `ClientCredentials` obtains
 one on the first request, reuses it until it expires, and replaces it when PayPal refuses it.
 
 **Pass a `TokenStore` for anything longer-lived than one process.** The default store lasts as long
@@ -78,8 +78,9 @@ $grant->canSearchTransactions();     // was Transaction Search enabled when this
 $grant->scopes();
 ```
 
-A token keeps the scopes it was issued with, so after changing the app's features, forget the
-stored token with `ClientCredentials::forget()`.
+**A change to the app's features may take until the token expires to show.** PayPal answers a
+repeated token request with the same unexpired token, so `ClientCredentials::forget()` makes the
+client ask again but may get the old scopes back. A token lasts nine hours.
 
 ## Transaction search
 

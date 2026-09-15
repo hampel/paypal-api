@@ -95,8 +95,11 @@ final class ClientCredentials implements Authentication
     }
 
     /**
-     * Forget the stored grant, so the next request obtains a new token - after changing what the
-     * app may do in PayPal's dashboard, for one.
+     * Forget the stored grant, so the next request asks PayPal for a token again.
+     *
+     * NOT A WAY TO PICK UP NEW SCOPES. PayPal answers the same token while it is unexpired -
+     * measured 2026-09-15 - so after the app's features change, the answer may still carry the old
+     * ones until that token's nine hours are up.
      */
     public function forget(Connection $connection): void
     {

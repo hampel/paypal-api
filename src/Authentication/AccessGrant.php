@@ -18,10 +18,14 @@ use Hampel\PayPal\Api\Support\Cast;
  * THERE IS NO REFRESH TOKEN. The client credentials grant issues none; an expired token is
  * replaced by asking again with the client id and secret.
  *
- * THE SCOPE IS WHAT THE APP WAS ALLOWED WHEN THE TOKEN WAS ISSUED - a space-separated list of
- * URIs, one per feature ticked for the REST app in PayPal's developer dashboard. That makes it
- * the cheapest answer to "is Transaction Search enabled", and a stale one after the dashboard
- * changes: a stored grant keeps the scopes it was issued with until it is forgotten.
+ * THE SCOPE IS WHAT THE APP MAY DO - a space-separated list of URIs for the features ticked for the
+ * REST app in PayPal's developer dashboard, thirty of them for a sandbox app measured 2026-09-15.
+ * That makes it the cheapest answer to "is Transaction Search enabled".
+ *
+ * IT MAY BE STALE AFTER THE DASHBOARD CHANGES, and forgetting the grant may not help. Measured
+ * 2026-09-15, a second token request made while the first token is unexpired answers the SAME
+ * token, so asking again can hand back the scopes that token was issued with. Whether PayPal
+ * reissues a token with new scopes once the app's features change is unmeasured.
  *
  * The expiry is stored as an instant rather than as `expires_in`, because a number of seconds
  * means nothing once the grant has sat in a cache for an hour.
@@ -35,9 +39,8 @@ final class AccessGrant implements \JsonSerializable
     public const EXPIRY_LEEWAY = 60;
 
     /**
-     * The scope a token carries when its app has Transaction Search enabled. NOT IN THE
-     * SPECIFICATIONS: it is the URI integrations are commonly told to look for, and it is
-     * unmeasured here until `vendor/bin/rig token` has printed a real token's scopes.
+     * The scope a token carries when its app has Transaction Search enabled. Not in any of the
+     * specifications; measured 2026-09-15 on a sandbox app with the feature ticked.
      */
     public const TRANSACTION_SEARCH_SCOPE = 'https://uri.paypal.com/services/reporting/search/read';
 
