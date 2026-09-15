@@ -1,0 +1,30 @@
+{
+    "balances": [
+        {
+            "currency": "AUD",
+            "primary": true,
+            "total_balance": {
+                "currency_code": "AUD",
+                "value": "1543.21"
+            },
+            "available_balance": {
+                "currency_code": "AUD",
+                "value": "1500.00"
+            },
+            "withheld_balance": {
+                "currency_code": "AUD",
+                "value": "43.21"
+            }
+        },
+        {
+            "currency": "USD",
+            "total_balance": {
+                "currency_code": "USD",
+                "value": "0.00"
+            }
+        }
+    ],
+    "account_id": "XZXSPECPDZHZU",
+    "as_of_time": "2026-09-15T09:00:00Z",
+    "last_refresh_time": "2026-09-15T08:59:59Z"
+}

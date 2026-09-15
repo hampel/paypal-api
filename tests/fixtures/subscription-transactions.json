@@ -1,0 +1,31 @@
+{
+    "transactions": [
+        {
+            "status": "COMPLETED",
+            "id": "5TY05013RG002845M",
+            "amount_with_breakdown": {
+                "gross_amount": {
+                    "currency_code": "USD",
+                    "value": "110.00"
+                },
+                "fee_amount": {
+                    "currency_code": "USD",
+                    "value": "4.62"
+                },
+                "net_amount": {
+                    "currency_code": "USD",
+                    "value": "105.38"
+                }
+            },
+            "payer_name": {
+                "given_name": "Alex",
+                "surname": "Example"
+            },
+            "payer_email": "buyer@example.com",
+            "time": "2026-08-03T22:15:07Z"
+        }
+    ],
+    "total_items": 1,
+    "total_pages": 1,
+    "links": []
+}

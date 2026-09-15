@@ -1,0 +1,65 @@
+{
+    "plans": [
+        {
+            "id": "P-5ML4271244454362WXNWU5NQ",
+            "product_id": "PROD-XXCD1234QWER65782",
+            "name": "Premium membership, annual",
+            "status": "ACTIVE",
+            "description": "One year of premium membership",
+            "usage_type": "LICENSED",
+            "billing_cycles": [
+                {
+                    "frequency": {
+                        "interval_unit": "MONTH",
+                        "interval_count": 1
+                    },
+                    "tenure_type": "TRIAL",
+                    "sequence": 1,
+                    "total_cycles": 1,
+                    "pricing_scheme": {
+                        "version": 1,
+                        "fixed_price": {
+                            "currency_code": "USD",
+                            "value": "0"
+                        }
+                    }
+                },
+                {
+                    "frequency": {
+                        "interval_unit": "YEAR",
+                        "interval_count": 1
+                    },
+                    "tenure_type": "REGULAR",
+                    "sequence": 2,
+                    "total_cycles": 0,
+                    "pricing_scheme": {
+                        "version": 1,
+                        "fixed_price": {
+                            "currency_code": "USD",
+                            "value": "110.00"
+                        }
+                    }
+                }
+            ],
+            "quantity_supported": false,
+            "create_time": "2026-01-10T01:00:00Z",
+            "update_time": "2026-01-10T01:00:00Z",
+            "links": [
+                {
+                    "href": "https://api-m.sandbox.paypal.com/v1/billing/plans/P-5ML4271244454362WXNWU5NQ",
+                    "rel": "self",
+                    "method": "GET"
+                }
+            ]
+        }
+    ],
+    "total_items": 21,
+    "total_pages": 2,
+    "links": [
+        {
+            "href": "https://api-m.sandbox.paypal.com/v1/billing/plans?page_size=20&page=2&total_required=true",
+            "rel": "next",
+            "method": "GET"
+        }
+    ]
+}

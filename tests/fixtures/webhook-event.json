@@ -1,0 +1,50 @@
+{
+    "id": "WH-2WR32451HC0233532-67976317FL4543714",
+    "create_time": "2026-08-03T22:15:09.000Z",
+    "resource_type": "capture",
+    "event_type": "PAYMENT.CAPTURE.COMPLETED",
+    "summary": "Payment completed for $ 110.0 USD",
+    "resource": {
+        "id": "42311647XV020574X",
+        "status": "COMPLETED",
+        "amount": {
+            "currency_code": "USD",
+            "value": "110.00"
+        },
+        "custom_id": "a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6",
+        "final_capture": true,
+        "seller_receivable_breakdown": {
+            "gross_amount": {
+                "currency_code": "USD",
+                "value": "110.00"
+            },
+            "paypal_fee": {
+                "currency_code": "USD",
+                "value": "4.62"
+            },
+            "net_amount": {
+                "currency_code": "USD",
+                "value": "105.38"
+            },
+            "receivable_amount": {
+                "currency_code": "AUD",
+                "value": "158.07"
+            },
+            "exchange_rate": {
+                "source_currency": "USD",
+                "target_currency": "AUD",
+                "value": "1.50000000"
+            }
+        },
+        "create_time": "2026-08-03T22:15:07Z",
+        "update_time": "2026-08-03T22:15:07Z"
+    },
+    "resource_version": "2.0",
+    "links": [
+        {
+            "href": "https://api-m.sandbox.paypal.com/v1/notifications/webhooks-events/WH-2WR32451HC0233532-67976317FL4543714",
+            "rel": "self",
+            "method": "GET"
+        }
+    ]
+}

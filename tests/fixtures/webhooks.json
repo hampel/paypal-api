@@ -1,0 +1,25 @@
+{
+    "webhooks": [
+        {
+            "id": "40Y916089Y8324740",
+            "url": "https://example.com/paypal/webhook",
+            "event_types": [
+                {
+                    "name": "PAYMENT.CAPTURE.COMPLETED",
+                    "description": "A payment capture completes."
+                },
+                {
+                    "name": "BILLING.SUBSCRIPTION.CANCELLED",
+                    "description": "A subscription is cancelled."
+                }
+            ],
+            "links": [
+                {
+                    "href": "https://api-m.sandbox.paypal.com/v1/notifications/webhooks/40Y916089Y8324740",
+                    "rel": "self",
+                    "method": "GET"
+                }
+            ]
+        }
+    ]
+}
