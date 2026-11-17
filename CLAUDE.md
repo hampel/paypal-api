@@ -103,11 +103,13 @@ settles one, move it into Measured with its date, correct the docblock that stat
 | **whether `end_date` is inclusive** | the one-second step in `Transactions::windows()` | `transactions` |
 | whether a response's `page` counts from zero | `TransactionPage::$reportedPage` is kept, not trusted | `transactions` |
 | **the sign and currency of a fee, and how a foreign-currency payment is laid out** | nothing assumes it; this is the reconciliation's main question | `transactions`, `payments` |
+| **how a USD payment lands on an AUD-primary account that holds a USD balance** — one row, or a payment beside `T0200`-series conversions | nothing assumes it | `transactions` |
 | which offset form dates arrive in | `Cast::datetime()` parses both | `transactions` |
 | what a refused Transaction Search looks like | `NotPermittedException` docblock | `transactions` |
 | whether a payment row's id is its capture id | nothing yet | `payments` |
 | whether `RESOURCE_NOT_FOUND` is what a missing id answers | `NotFoundException::isMissingResource()` | `payments` |
 | whether a `T0002` row's reference id is the subscription id, and `custom_field` its `custom_id` | `Subscription` docblock | `subscriptions` |
+| what a failed subscription charge and its retry leave behind — a transaction row, a status, or only `failed_payments_count` on the subscription | `FailedPayment` docblock | `subscriptions` |
 | whether a plan list is minimal without `Prefer` | `Plans` always sends it | `subscriptions` |
 | whether a bad signature answers `200 FAILURE` or an error | `Webhooks::verifySignature()` | `webhooks` |
 | whether a genuine notification verifies with the body spliced in | `WebhookNotification` | none — needs a delivered notification |
