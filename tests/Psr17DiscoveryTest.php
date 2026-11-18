@@ -15,9 +15,6 @@ use Hampel\PayPal\Api\Support\Psr17Discovery;
 use Psr\Http\Message\RequestFactoryInterface;
 use Psr\Http\Message\StreamFactoryInterface;
 
-/**
- * Ported from xenforo-api, where the class was written.
- */
 final class Psr17DiscoveryTest extends TestCase
 {
     public function testAClientCanBeBuiltWithoutNamingAFactory(): void

@@ -117,7 +117,7 @@ reporting data. The fourth, below, answered the fee, layout and date questions.
 
 Twelve rows from the sandbox business account (AUD primary): Send Money payments in AUD and USD,
 one subscription payment from a REST plan and one from a PayPal Standard button, and the
-conversions beside them. The raw rows are in `CLAUDE.local.md`'s harness runs.
+conversions beside them.
 
 - **A fee is negative, in the payment's currency, on the payment's own row.** USD 4.00 paid a fee
   of `-0.44` USD; USD 10.00, `-0.64` USD. No row of its own, and the conversion rows carry none.
