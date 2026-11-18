@@ -80,6 +80,63 @@ final class SubscriptionsTest extends TestCase
         $this->assertSame('Alex Example', $transactions[0]->payerName);
     }
 
+    public function testFindAnswersASubscriptionOrNullForOneThatDoesNotExist(): void
+    {
+        $this->pushFixture('subscription');
+        $this->pushFixture('not-found', 404);
+
+        $this->assertSame('I-ETC83DNY7VWA', $this->paypal()->subscriptions()->find('I-ETC83DNY7VWA')?->id);
+        $this->assertNull($this->paypal()->subscriptions()->find('I-NOSUCH'));
+        $this->assertSame('/v1/billing/subscriptions/I-NOSUCH', $this->sentPath());
+    }
+
+    /**
+     * The failed payment is built from the specification's schema: no sandbox charge has failed
+     * yet, so its values are an illustration, not an observation.
+     */
+    public function testALastFailedPaymentIsMapped(): void
+    {
+        $body = self::fixture('subscription');
+        $billing = is_array($body['billing_info'] ?? null) ? $body['billing_info'] : [];
+        $billing['failed_payments_count'] = 1;
+        $billing['last_failed_payment'] = [
+            'amount' => ['currency_code' => 'USD', 'value' => '10.00'],
+            'time' => '2026-11-19T10:00:05Z',
+            'reason_code' => 'PAYMENT_DENIED',
+            'next_payment_retry_time' => '2026-11-24T10:00:00Z',
+        ];
+        $body['billing_info'] = $billing;
+        $this->client->pushJson(200, $body);
+
+        $failed = $this->paypal()->subscriptions()->get('I-ETC83DNY7VWA', ['last_failed_payment'])->billing?->lastFailedPayment;
+
+        $this->assertNotNull($failed);
+        $this->assertSame('10.00 USD', (string) $failed->amount);
+        $this->assertSame('2026-11-19T10:00:05+00:00', $failed->failedAt?->format(DATE_ATOM));
+        $this->assertSame('PAYMENT_DENIED', $failed->reasonCode);
+        $this->assertSame('2026-11-24T10:00:00+00:00', $failed->nextRetryAt?->format(DATE_ATOM));
+    }
+
+    public function testASubscriptionThatHasNotFailedHasNoFailedPayment(): void
+    {
+        $this->pushFixture('subscription');
+
+        $this->assertNull($this->paypal()->subscriptions()->get('I-ETC83DNY7VWA')->billing?->lastFailedPayment);
+    }
+
+    public function testAPlanIsReadByIdAndFindAnswersNullForOneThatDoesNotExist(): void
+    {
+        $plan = ['id' => 'P-51P886905C292613SNL6PW5Q', 'product_id' => 'PROD-57S375170X4763245', 'name' => 'Daily', 'status' => 'ACTIVE'];
+        $this->client->pushJson(200, $plan);
+        $this->client->pushJson(200, $plan);
+        $this->pushFixture('not-found', 404);
+
+        $this->assertSame('PROD-57S375170X4763245', $this->paypal()->plans()->get('P-51P886905C292613SNL6PW5Q')->productId);
+        $this->assertSame('/v1/billing/plans/P-51P886905C292613SNL6PW5Q', $this->sentPath());
+        $this->assertSame('Daily', $this->paypal()->plans()->find('P-51P886905C292613SNL6PW5Q')?->name);
+        $this->assertNull($this->paypal()->plans()->find('P-NOSUCH'));
+    }
+
     public function testAPlanListAsksForFullPlansAndATotal(): void
     {
         $this->pushFixture('plans');

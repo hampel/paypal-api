@@ -306,6 +306,48 @@ final class TransactionsTest extends TestCase
         $this->assertNull($rows[4]->payer, 'nor on a conversion the account made itself');
     }
 
+    /**
+     * @return array<string, array{string, bool, bool, bool, bool}>
+     */
+    public static function eventCodes(): array
+    {
+        //          code     payment fee    reversal refund
+        return [
+            'a payment' => ['T0006', true, false, false, false],
+            'a fee' => ['T0106', false, true, false, false],
+            'a reversal' => ['T1106', false, false, true, false],
+            'a refund' => ['T1107', false, false, true, true],
+            'lower case' => ['t1107', false, false, true, true],
+            'a conversion' => ['T0200', false, false, false, false],
+        ];
+    }
+
+    #[\PHPUnit\Framework\Attributes\DataProvider('eventCodes')]
+    public function testTheEventCodeHelpers(string $code, bool $payment, bool $fee, bool $reversal, bool $refund): void
+    {
+        $this->client->pushJson(200, self::page([['transaction_info' => ['transaction_id' => 'A', 'transaction_event_code' => $code]]]));
+
+        $row = $this->paypal()->transactions()->search(self::at('2026-11-01'), self::at('2026-11-02'))->transactions[0];
+
+        $this->assertSame($payment, $row->isPayment());
+        $this->assertSame($fee, $row->isFee());
+        $this->assertSame($reversal, $row->isReversal());
+        $this->assertSame($refund, $row->isRefund());
+    }
+
+    public function testTheStoreFiltersAreSentByPayPalsNames(): void
+    {
+        $query = TransactionFilter::make()
+            ->withPaymentInstrumentType('credit_card')
+            ->withStoreId('store-1')
+            ->withTerminalId('till-2')
+            ->toQuery();
+
+        $this->assertSame('CREDIT_CARD', $query['payment_instrument_type']);
+        $this->assertSame('store-1', $query['store_id']);
+        $this->assertSame('till-2', $query['terminal_id']);
+    }
+
     public function testBalances(): void
     {
         $this->pushFixture('balances');
