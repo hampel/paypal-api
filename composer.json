@@ -28,7 +28,7 @@
         "ext-ctype": "*",
         "ext-json": "*",
         "psr/http-client": "^1.0",
-        "psr/http-factory": "^1.0",
+        "psr/http-factory": "^1.1",
         "psr/http-message": "^1.1|^2.0",
         "psr/log": "^1.1|^2.0|^3.0"
     },
