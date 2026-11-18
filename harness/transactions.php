@@ -6,7 +6,8 @@
  * QUESTIONS THIS SETTLES THAT THE SUITE CANNOT - every one of them is documented and unmeasured:
  *
  *   - IS TRANSACTION SEARCH ENABLED, and if not, what does the refusal look like?
- *   - IS 31 DAYS THE LIMIT? A range of exactly 31 days, and one of 31 days and a second, raw.
+ *   - IS 31 DAYS THE LIMIT? A range of exactly 31 days, and one of 31 days and a second, raw -
+ *     ending an hour before the last refresh, since a later end is cut back and proves nothing.
  *   - IS 500 THE LARGEST PAGE? 500 and 501, raw.
  *   - IS A FILTER HONOURED? The same window unfiltered and filtered by a transaction id that cannot
  *     exist. The dangerous answer is not an error: it is the unfiltered count again.
@@ -86,11 +87,27 @@ try {
     $io->line();
     $io->info('the 31-day limit, raw');
 
-    $start = $to->modify('-31 days');
+    // Anchored at the last refresh, not at now: PayPal cuts an end later than its last refresh back
+    // to it (measured 2026-11-18), which turned the first run's "31 days and a second" into less
+    // than 31 days and settled nothing. Each probe prints the dates PayPal answered with, so a cut
+    // that still happens is visible rather than read as an accepted range.
+    $anchor = $page->lastRefreshedAt !== null
+        ? (new DateTimeImmutable('@' . $page->lastRefreshedAt->getTimestamp()))->modify('-1 hour')
+        : $to->modify('-4 hours');
+    $start = $anchor->modify('-31 days');
 
-    foreach (['exactly 31 days' => $to, '31 days and 1 second' => $to->modify('+1 second')] as $label => $end) {
+    $io->values(['anchored at' => harness_utc($anchor) . ' - an hour before the last refresh']);
+
+    foreach (['exactly 31 days' => $anchor, '31 days and 1 second' => $anchor->modify('+1 second')] as $label => $end) {
         $response = harness_raw($paypal, 'v1/reporting/transactions', ['start_date' => harness_utc($start), 'end_date' => harness_utc($end), 'page_size' => 1]);
-        $io->values([$label => harness_describe($response, 240)]);
+        $answer = $response->getStatusCode() === 200 ? harness_json($response) : [];
+
+        $io->values([
+            $label => sprintf('asked %s to %s', harness_utc($start), harness_utc($end)),
+            '  answered' => $response->getStatusCode() === 200
+                ? sprintf('HTTP 200, %s to %s', var_export($answer['start_date'] ?? null, true), var_export($answer['end_date'] ?? null, true))
+                : harness_describe($response, 240),
+        ]);
     }
 
     $io->line();
