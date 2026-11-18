@@ -23,10 +23,16 @@ jobs:
       # The corners of the supported range, not the whole matrix: the floor with the
       # oldest dependencies it claims, the floor with current ones, and the ceiling.
       # Everything between fails only when a corner does.
+      #
+      # The ceiling with the oldest dependencies is a corner of its own. An old dependency
+      # release can be fine on the floor PHP and deprecated on a newer one -
+      # psr/http-factory 1.0.0's implicitly nullable parameters on PHP 8.4 - and no other
+      # job pairs an old release with a new PHP.
       matrix:
         include:
           - { php: '8.3', deps: '--prefer-lowest' }
           - { php: '8.3', deps: '' }
+          - { php: '8.5', deps: '--prefer-lowest' }
           - { php: '8.5', deps: '' }
 
     steps:
