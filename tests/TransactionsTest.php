@@ -301,7 +301,9 @@ final class TransactionsTest extends TestCase
         $this->assertSame($payment->id, $conversionOut->referenceId, 'a conversion names the payment\'s id');
         $this->assertSame($payment->id, $conversionIn->referenceId);
         $this->assertNotSame($payment->referenceId, $conversionIn->referenceId, 'not the payment\'s own reference');
-        $this->assertNull($conversionOut->payer?->email, 'a conversion row has no payer to speak of');
+        $this->assertNotSame([], $conversionOut->raw['payer_info'], 'PayPal sends a payer_info that names nobody');
+        $this->assertNull($conversionOut->payer, 'and that is no payer');
+        $this->assertNull($rows[4]->payer, 'nor on a conversion the account made itself');
     }
 
     public function testBalances(): void

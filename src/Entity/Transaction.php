@@ -15,6 +15,10 @@ use Hampel\PayPal\Api\Support\Cast;
  * present when the search asked for them. The transaction info is flattened onto this class, the
  * payer and the cart are mapped, and the rest stay on `raw`.
  *
+ * `payer` IS NULL WHEN `payer_info` NAMES NOBODY - no account id, email or name. A conversion row
+ * carries an address status, an empty name and an address, measured on 2026-11-18, and that is
+ * not a payer; the section is still on `raw`.
+ *
  * A PAYMENT IS OFTEN MORE THAN ONE ROW. Measured on 2026-11-18, a USD payment into an AUD account
  * set to convert it was the payment in USD, its fee negative and in USD on the same row, then two
  * `T0200` rows - the net out of USD and into AUD - whose `referenceId` is the payment's `id`, not
@@ -72,6 +76,7 @@ final class Transaction extends Entity
     {
         $info = Cast::object($row['transaction_info'] ?? null);
         $cart = Cast::object($row['cart_info'] ?? null);
+        $payer = Cast::nested($row['payer_info'] ?? null, Payer::fromArray(...));
 
         return new self(
             Cast::text($info['transaction_id'] ?? null),
@@ -96,7 +101,7 @@ final class Transaction extends Entity
             Cast::text($info['protection_eligibility'] ?? null),
             Cast::text($info['instrument_type'] ?? null),
             Cast::text($info['instrument_sub_type'] ?? null),
-            Cast::nested($row['payer_info'] ?? null, Payer::fromArray(...)),
+            $payer !== null && ($payer->accountId ?? $payer->email ?? $payer->name()) !== null ? $payer : null,
             Cast::objects($cart['item_details'] ?? null, CartItem::fromArray(...)),
             Cast::text($cart['paypal_invoice_id'] ?? null),
             $row,
