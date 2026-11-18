@@ -3,7 +3,8 @@
 /**
  * Exercise: probe transaction search's documented limits and print a window's rows - reads only.
  *
- * QUESTIONS THIS SETTLES THAT THE SUITE CANNOT - every one of them is documented and unmeasured:
+ * QUESTIONS THIS SETTLES THAT THE SUITE CANNOT - all documented and unmeasured when it was written;
+ * CLAUDE.md's Measured section has the answers so far:
  *
  *   - IS TRANSACTION SEARCH ENABLED, and if not, what does the refusal look like?
  *   - IS 31 DAYS THE LIMIT? A range of exactly 31 days, and one of 31 days and a second, raw -

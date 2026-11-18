@@ -10,9 +10,13 @@ use Hampel\PayPal\Api\Support\Cast;
 /**
  * A subscription, from `GET /v1/billing/subscriptions/{id}` - an id beginning `I-`.
  *
- * `customId` is the merchant's reference, given when the subscription was created, and it is the
- * same value the subscription's payments carry as `custom_field` in transaction search. Each payment
- * is a `T0002` row whose `referenceId` is this subscription's id.
+ * Each payment is a `T0002` row whose `referenceId` is this subscription's id, `referenceIdType`
+ * `RP`. `customId` is the merchant's reference, given when the subscription was created, and the
+ * same value its payments carry as `customField` - measured on 2026-11-18.
+ *
+ * A SUBSCRIPTION MADE BY A PAYPAL STANDARD BUTTON is read here too, by the same `I-` id, but has no
+ * `planId` and no `customId`: the button's `custom` reaches neither this nor transaction search.
+ * Its amounts came back as `"10.0"`, which `Money` keeps as sent.
  *
  * `plan` is present only when the subscription was read with the plan asked for.
  */

@@ -83,8 +83,8 @@ final class Transactions extends Endpoint
      * each window page by page. Every page is a request; stopping early - a `break` in the foreach -
      * stops the requests. Transactions arrive window by window, in whatever order PayPal lists each.
      *
-     * A WINDOW'S END IS TREATED AS INCLUSIVE, which is what makes the one-second step gapless. Whether
-     * PayPal's `end_date` is inclusive is unmeasured; `vendor/bin/rig transactions` asks.
+     * A WINDOW'S END IS INCLUSIVE, which is what makes the one-second step gapless. Measured on
+     * 2026-11-18: a one-second window ending on a row's own initiation second found it.
      *
      * THE GENERATOR RETURNS THE LAST PAGE IT FETCHED, read with getReturn() once the foreach has run
      * to the end. Its `endDate` is how far the answer actually reached - PayPal cuts a search back to

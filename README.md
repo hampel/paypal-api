@@ -138,8 +138,9 @@ A row carries the transaction info flattened — `id`, `eventCode`, `status`, `a
 `invoiceId`, `customField`, `referenceId` — with `payer` and `cartItems` mapped, and everything else
 PayPal sent on `raw`.
 
-**A payment is often more than one row.** A payment in a currency the account does not hold arrives
-beside currency conversion rows, which name the payment as their `referenceId`. The event code
+**A payment is often more than one row.** A payment in a currency the account converts arrives
+beside currency conversion rows, which name the payment's `id` as their `referenceId`. The fee is on
+the payment's own row, negative and in the payment's currency. The event code
 classifies each row:
 
 | method | event codes |
@@ -210,7 +211,9 @@ foreach ($paypal->plans()->each() as $plan) {
 ```
 
 A subscription's payments also appear in transaction search as `T0002` rows whose `referenceId` is
-the subscription's id.
+the subscription's id. That holds for a subscription made by a PayPal Standard button too, and
+`get()` reads one — but it has no plan and no `customId`, and the button's `custom` appears nowhere
+in the API.
 
 ## Webhooks
 

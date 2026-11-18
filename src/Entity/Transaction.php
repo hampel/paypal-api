@@ -15,17 +15,18 @@ use Hampel\PayPal\Api\Support\Cast;
  * present when the search asked for them. The transaction info is flattened onto this class, the
  * payer and the cart are mapped, and the rest stay on `raw`.
  *
- * A PAYMENT IS OFTEN MORE THAN ONE ROW. A payment received in a currency the account does not hold
- * arrives beside currency conversion rows (`T0200`), and a fee can be a row of its own. The rows
- * that belong together share `referenceId`. How exactly a USD payment into an AUD account is laid
- * out is the question `vendor/bin/rig transactions` exists to answer; nothing here assumes it.
+ * A PAYMENT IS OFTEN MORE THAN ONE ROW. Measured on 2026-11-18, a USD payment into an AUD account
+ * set to convert it was the payment in USD, its fee negative and in USD on the same row, then two
+ * `T0200` rows - the net out of USD and into AUD - whose `referenceId` is the payment's `id`, not
+ * the payment's own `referenceId`. A payment the account keeps in its own currency is one row.
  *
  * A TRANSACTION ID IS NOT UNIQUE in the reporting system - PayPal documents that one id can appear
  * twice, once balance-affecting and once not. Do not key a map by `id` alone.
  *
- * `customField` is what the merchant attached at checkout: `custom` on a classic button,
- * `custom_id` on an order or a subscription. It is how a payment is traced back to whatever the
- * merchant's own system sold.
+ * `customField` is what the merchant attached at checkout: `custom_id` on an order or a REST
+ * subscription. It is how a payment is traced back to whatever the merchant's own system sold.
+ * A PAYPAL STANDARD SUBSCRIPTION'S `custom` DOES NOT ARRIVE: measured on 2026-11-18, its `T0002`
+ * rows had no `custom_field`, and its `item_name` was the `subject`.
  */
 final class Transaction extends Entity
 {

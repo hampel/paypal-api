@@ -161,8 +161,8 @@ final class Cast
      * `format('Y-m-d')` on the value as returned is the date as PayPal wrote it.
      *
      * Both offset forms parse: RFC 3339's `+10:00`, which the specifications describe, and the
-     * colon-less `+0000` of PayPal's older transaction search samples. Which one the API sends
-     * today is unmeasured - `vendor/bin/rig transactions` prints it raw.
+     * colon-less `+0000` of PayPal's older transaction search samples. A sandbox account sent
+     * `Z` on 2026-11-18; whether a live account's zone shows up as an offset is unmeasured.
      */
     public static function datetime(mixed $value): ?\DateTimeImmutable
     {

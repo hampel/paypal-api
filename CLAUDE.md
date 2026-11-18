@@ -91,8 +91,8 @@ Against a sandbox app, with the harness. Where a docblock says "measured", it me
 
 ### Transaction search, an empty window — `transactions`, 2026-11-18
 
-The window held no rows, because the payments made that morning were newer than PayPal's reporting
-data, so the fee, layout and date questions are still open.
+The first three runs held no rows, because the payments made that morning were newer than PayPal's
+reporting data. The fourth, below, answered the fee, layout and date questions.
 
 - **`end_date` is cut back to `last_refreshed_datetime`.** Asked for a window ending at the moment
   of the request, PayPal answered with `end_date` set to `last_refreshed_datetime`, 1.8 hours
@@ -101,18 +101,48 @@ data, so the fee, layout and date questions are still open.
 - **500 is the largest page.** `page_size=501` answers 400 `INVALID_REQUEST`, naming `/page_size`.
 - **The response's `page` counts from 1**, as the request does, not from zero as the specification
   says.
-- Dates in the response's own fields came back as `Z`, echoing the request. The rows' dates are
-  not seen yet.
+- Dates in the response's own fields came back as `Z`, echoing the request.
 - **31 days and one second is accepted**, on a window ending before the last refresh so nothing cut
   it back: HTTP 200, the range echoed as asked. The documented limit is not enforced at the second;
   how far past it PayPal goes is unprobed. `Transactions::search()` still refuses past 31 days,
   which costs a caller nothing, since `each()` walks windows.
-- **The sandbox's reporting data advances in steps, not continuously**: across three runs on
-  2026-11-18 `last_refreshed_datetime` was `22:59:59Z`, `23:59:59Z`, then `00:29:59Z` — 1.8 to 2.1
-  hours behind each request. The step and the schedule are not settled.
+- **The sandbox's reporting data advances in steps, not continuously**: across four runs on
+  2026-11-18 `last_refreshed_datetime` was `22:59:59Z`, `23:59:59Z`, `00:29:59Z`, then `01:59:59Z` —
+  1.8 to 2.1 hours behind each request. The step and the schedule are not settled.
 - **Balances share the same lag.** `v1/reporting/balances` with no `as_of_time` answered with
   `as_of_time` and `last_refresh_time` both at the search's last refresh, not the moment of the
   request — it is the reporting snapshot, not a live balance.
+
+### Transaction search, rows — `transactions`, 2026-11-18, fourth run
+
+Twelve rows from the sandbox business account (AUD primary): Send Money payments in AUD and USD,
+one subscription payment from a REST plan and one from a PayPal Standard button, and the
+conversions beside them. The raw rows are in `CLAUDE.local.md`'s harness runs.
+
+- **A fee is negative, in the payment's currency, on the payment's own row.** USD 4.00 paid a fee
+  of `-0.44` USD; USD 10.00, `-0.64` USD. No row of its own, and the conversion rows carry none.
+- **A USD payment into an account that converts it is three rows**: the `T0000` in USD with its
+  fee, then a `T0200` taking the net out of USD (`-3.56` USD) and a `T0200` putting it into AUD
+  (`5.01` AUD). **Both conversion rows name the payment's `transaction_id` as their
+  `paypal_reference_id`** — not the payment's own reference id, which is a different `TXN` id. A
+  USD payment the account keeps in USD is one row, and so was every `T0002`.
+- **Holding a USD balance did not by itself stop the conversion.** A payment at 00:37Z converted
+  with 667.10 USD already in the account; one at 00:47Z did not. What changed between them is
+  the account's own setting, not anything in the API.
+- **A `T0002` row's `paypal_reference_id` is the subscription id, type `RP`** — `I-…` — for a
+  REST subscription and for one made by a Standard button alike.
+- **`custom_field` carries a REST subscription's `custom_id`. A Standard button's `custom` does
+  not arrive anywhere** in the row: `custom_field` is absent, and neither `cart_info` nor
+  `transaction_subject` holds it.
+- **A Standard button's `item_name` lands in `transaction_subject`**; a REST subscription's
+  subject is the plan's name. The cart item carries quantity and amounts and no name in either.
+- **`GET /v1/billing/subscriptions/{id}` knows a Standard-button subscription**: `ACTIVE`, with
+  billing info and `next_billing_time`, but no `plan_id` and no `custom_id`. Its amounts come back
+  as `"10.0"` — one decimal place, not the currency's two.
+- **`end_date` and `start_date` are both inclusive**: a one-second window ending, and one
+  starting, on a row's own initiation second each found it.
+- **The rows' dates are `Z`**, on a sandbox account; the documented "time zone of the account" has
+  not been seen to differ from UTC.
 
 ## Documented, not measured
 
@@ -124,15 +154,10 @@ settles one, move it into Measured with its date, correct the docblock that stat
 | question | code that assumes an answer | exercise |
 |---|---|---|
 | whether a token requested after the app's features change carries the new scopes before the old token expires | `AccessGrant`, `NotPermittedException` docblocks | none — needs a dashboard change |
-| **whether `end_date` is inclusive** | the one-second step in `Transactions::windows()` | `transactions` |
-| **the sign and currency of a fee, and how a foreign-currency payment is laid out** | nothing assumes it; this is the reconciliation's main question | `transactions`, `payments` |
-| **how a USD payment lands on an AUD-primary account that holds a USD balance** — one row, or a payment beside `T0200`-series conversions | nothing assumes it | `transactions` |
-| which offset form dates arrive in | `Cast::datetime()` parses both | `transactions` |
+| how a fee and a foreign-currency payment look on a captured order rather than Send Money | nothing assumes it | `payments` |
 | what a refused Transaction Search looks like | `NotPermittedException` docblock | `transactions` |
 | whether a payment row's id is its capture id | nothing yet | `payments` |
 | whether `RESOURCE_NOT_FOUND` is what a missing id answers | `NotFoundException::isMissingResource()` | `payments` |
-| whether a `T0002` row's reference id is the subscription id, and `custom_field` its `custom_id` | `Subscription` docblock | `subscriptions` |
-| **for a subscription made by a PayPal Standard button** (`_xclick-subscriptions`, no REST plan): where `item_name` lands, what `paypal_reference_id` and its type are, whether `custom` lands in `custom_field`, and whether `Subscriptions::get()` knows it at all | `Subscription` docblock assumes a REST subscription | `transactions`, `subscriptions` |
 | what a failed subscription charge and its retry leave behind — a transaction row, a status, or only `failed_payments_count` on the subscription | `FailedPayment` docblock | `subscriptions` |
 | whether a plan list is minimal without `Prefer` | `Plans` always sends it | `subscriptions` |
 | whether a bad signature answers `200 FAILURE` or an error | `Webhooks::verifySignature()` | `webhooks` |
