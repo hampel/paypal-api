@@ -11,7 +11,8 @@ use Hampel\PayPal\Api\Support\Cast;
  *
  * `asOf` is the moment asked for, or the latest PayPal could serve; `lastRefreshedAt` is when the
  * figures were last brought up to date. PayPal documents the same three-hour lag as for
- * transaction search.
+ * transaction search, and on 2026-11-18 the sandbox answered "now" with both set to the search's
+ * last refresh: these are reporting figures, not a live balance.
  */
 final class AccountBalances extends Entity
 {

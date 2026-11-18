@@ -110,6 +110,9 @@ data, so the fee, layout and date questions are still open.
 - **The sandbox's reporting data advances in steps, not continuously**: across three runs on
   2026-11-18 `last_refreshed_datetime` was `22:59:59Z`, `23:59:59Z`, then `00:29:59Z` — 1.8 to 2.1
   hours behind each request. The step and the schedule are not settled.
+- **Balances share the same lag.** `v1/reporting/balances` with no `as_of_time` answered with
+  `as_of_time` and `last_refresh_time` both at the search's last refresh, not the moment of the
+  request — it is the reporting snapshot, not a live balance.
 
 ## Documented, not measured
 
