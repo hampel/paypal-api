@@ -7,7 +7,8 @@ namespace Hampel\PayPal\Api\Exception;
 use Psr\Http\Message\ResponseInterface;
 
 /**
- * A success whose body is not JSON.
+ * A success whose body cannot be used - not JSON, or JSON missing what the request exists for (a token,
+ * a verification status).
  *
  * The failure worth being loud about in a client whose answers are mostly lists: a maintenance
  * page, a proxy's error document or a truncated response is a 200 with something other than JSON

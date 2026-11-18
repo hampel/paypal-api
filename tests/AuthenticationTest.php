@@ -12,6 +12,7 @@ use Hampel\PayPal\Api\Client;
 use Hampel\PayPal\Api\Config;
 use Hampel\PayPal\Api\Environment;
 use Hampel\PayPal\Api\Exception\InvalidArgumentException;
+use Hampel\PayPal\Api\Exception\MalformedResponseException;
 use Hampel\PayPal\Api\Exception\NotAuthenticatedException;
 use Hampel\PayPal\Api\Exception\RuntimeException;
 
@@ -171,6 +172,33 @@ final class AuthenticationTest extends TestCase
         } catch (NotAuthenticatedException $e) {
             $this->assertSame('invalid_client', $e->oauthError());
             $this->assertStringContainsString('Client Authentication failed', $e->getMessage());
+        }
+
+        $this->assertCount(1, $this->client->requests);
+    }
+
+    /**
+     * @return iterable<string, array{string}>
+     */
+    public static function tokenlessAnswers(): iterable
+    {
+        yield 'an empty body' => [''];
+        yield 'an empty object' => ['{}'];
+        yield 'another service' => ['{"status": "ok"}'];
+    }
+
+    #[\PHPUnit\Framework\Attributes\DataProvider('tokenlessAnswers')]
+    public function testASuccessWithNoTokenIsAMalformedResponseNotAnInvalidArgument(string $body): void
+    {
+        $this->client->pushRaw(200, $body, ['Content-Type' => 'application/json', 'PayPal-Debug-Id' => 'dbg-1']);
+
+        try {
+            $this->paypal(authentication: $this->credentials())->captures()->get('A');
+            $this->fail('expected MalformedResponseException');
+        } catch (MalformedResponseException $e) {
+            $this->assertStringContainsString('without an access_token', $e->getMessage());
+            $this->assertSame(200, $e->statusCode);
+            $this->assertSame('dbg-1', $e->debugId);
         }
 
         $this->assertCount(1, $this->client->requests);

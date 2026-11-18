@@ -6,6 +6,8 @@ namespace Hampel\PayPal\Api\Endpoint;
 
 use Hampel\PayPal\Api\Authentication\AccessGrant;
 use Hampel\PayPal\Api\Exception\InvalidArgumentException;
+use Hampel\PayPal\Api\Exception\MalformedResponseException;
+use Hampel\PayPal\Api\Support\Cast;
 
 /**
  * Obtaining a token, at `POST /v1/oauth2/token`.
@@ -21,7 +23,10 @@ final class Authorisation extends Endpoint
      * Exchange an app's client id and secret for a grant.
      *
      * A refused id or secret raises NotAuthenticatedException, whose oauthError() is PayPal's
-     * code - documented as `invalid_client`.
+     * code - documented as `invalid_client`. A success with no token in it - an empty 200, `{}`, or
+     * another service's answer behind a misdirected base URI - raises MalformedResponseException,
+     * like every other unusable answer, rather than AccessGrant's InvalidArgumentException, which
+     * would read as a bug in the caller.
      */
     public function token(string $clientId, #[\SensitiveParameter] string $secret, ?\DateTimeImmutable $now = null): AccessGrant
     {
@@ -36,6 +41,19 @@ final class Authorisation extends Endpoint
             ->withForm($connection->request('POST', 'v1/oauth2/token'), ['grant_type' => 'client_credentials'])
             ->withHeader('Authorization', 'Basic ' . base64_encode(trim($clientId) . ':' . trim($secret)));
 
-        return AccessGrant::fromResponse($connection->send($request)->object(), $issuedAt);
+        $response = $connection->send($request);
+
+        if (Cast::text($response->object()['access_token'] ?? null) === null) {
+            throw new MalformedResponseException(
+                'PayPal answered the token request (POST v1/oauth2/token) without an access_token.',
+                $response->status,
+                null,
+                $response->body === null ? '' : (string) json_encode($response->body),
+                null,
+                $response->meta->debugId(),
+            );
+        }
+
+        return AccessGrant::fromResponse($response->object(), $issuedAt);
     }
 }

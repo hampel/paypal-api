@@ -258,7 +258,7 @@ Every exception implements `ExceptionInterface`.
 | `TooManyRequestsException` | 429 |
 | `ServerException` | 5xx |
 | `ClientException` | any other 4xx |
-| `MalformedResponseException` | a success whose body is not JSON |
+| `MalformedResponseException` | a success PayPal answered with something unusable — not JSON, or a token response with no token |
 | `InvalidArgumentException` | refused before sending — a search over 31 days, a missing webhook header |
 
 **Branch on the issue, not the message.** PayPal's message is the same sentence for every error of a
