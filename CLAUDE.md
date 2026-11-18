@@ -123,6 +123,7 @@ settles one, move it into Measured with its date, correct the docblock that stat
 | whether a payment row's id is its capture id | nothing yet | `payments` |
 | whether `RESOURCE_NOT_FOUND` is what a missing id answers | `NotFoundException::isMissingResource()` | `payments` |
 | whether a `T0002` row's reference id is the subscription id, and `custom_field` its `custom_id` | `Subscription` docblock | `subscriptions` |
+| **for a subscription made by a PayPal Standard button** (`_xclick-subscriptions`, no REST plan): where `item_name` lands, what `paypal_reference_id` and its type are, whether `custom` lands in `custom_field`, and whether `Subscriptions::get()` knows it at all | `Subscription` docblock assumes a REST subscription | `transactions`, `subscriptions` |
 | what a failed subscription charge and its retry leave behind — a transaction row, a status, or only `failed_payments_count` on the subscription | `FailedPayment` docblock | `subscriptions` |
 | whether a plan list is minimal without `Prefer` | `Plans` always sends it | `subscriptions` |
 | whether a bad signature answers `200 FAILURE` or an error | `Webhooks::verifySignature()` | `webhooks` |
