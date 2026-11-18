@@ -229,23 +229,24 @@ final class TransactionsTest extends TestCase
     {
         $this->pushFixture('transactions');
 
-        $page = $this->paypal()->transactions()->search(self::at('2026-08-01'), self::at('2026-08-31'));
-        $payment = $page->transactions[0];
+        $page = $this->paypal()->transactions()->search(self::at('2026-11-18'), self::at('2026-11-18 02:00:00'));
+        $payment = $page->transactions[10];
 
-        $this->assertSame(3, $page->totalItems);
+        $this->assertSame(12, $page->totalItems);
         $this->assertFalse($page->hasMore());
         $this->assertSame('XZXSPECPDZHZU', $page->accountNumber);
-        $this->assertSame('2026-09-15T09:59:59+00:00', $page->lastRefreshedAt?->format(DATE_ATOM));
+        $this->assertSame('2026-11-18T01:59:59+00:00', $page->lastRefreshedAt?->format(DATE_ATOM));
+        $this->assertSame('2026-11-18T01:59:59+00:00', $page->endDate?->format(DATE_ATOM), 'cut back to the last refresh');
 
-        $this->assertSame('5TY05013RG002845M', $payment->id);
+        $this->assertSame('3DR34135EM370681V', $payment->id);
         $this->assertSame(TransactionStatus::Success, $payment->transactionStatus());
-        $this->assertSame('110.00 USD', (string) $payment->amount);
-        $this->assertSame('-4.62', $payment->fee?->value);
-        $this->assertSame('a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6', $payment->customField);
-        $this->assertSame('INV-2026-0042', $payment->invoiceId);
-        $this->assertSame('I-BW452GLLEP1G', $payment->referenceId);
-        $this->assertSame('SUB', $payment->referenceIdType);
-        $this->assertSame('2026-08-03', $payment->initiatedAt?->format('Y-m-d'));
+        $this->assertSame('10.00 USD', (string) $payment->amount);
+        $this->assertSame('-0.64 USD', (string) $payment->fee, 'negative, in the payment currency');
+        $this->assertSame('harness-20261118T013634Z', $payment->customField);
+        $this->assertNull($payment->invoiceId);
+        $this->assertSame('I-ETC83DNY7VWA', $payment->referenceId, 'the subscription id');
+        $this->assertSame('RP', $payment->referenceIdType);
+        $this->assertSame('2026-11-18T01:44:05+00:00', $payment->initiatedAt?->format(DATE_ATOM));
 
         $payer = $payment->payer;
 
@@ -256,43 +257,76 @@ final class TransactionsTest extends TestCase
         $this->assertFalse($payer->addressVerified);
 
         $this->assertCount(1, $payment->cartItems);
-        $this->assertSame('premium-annual', $payment->cartItems[0]->code);
-        $this->assertSame('110.00', $payment->cartItems[0]->total?->value);
+        $this->assertNull($payment->cartItems[0]->name, 'a subscription cart item carries no name');
+        $this->assertSame('10.00', $payment->cartItems[0]->total?->value);
 
         $this->assertSame(['shipping_info' => ['name' => 'Alex Example']], array_intersect_key($payment->raw, ['shipping_info' => true]));
+    }
+
+    public function testAPayPalStandardSubscriptionPaymentCarriesNoCustomValue(): void
+    {
+        $this->pushFixture('transactions');
+
+        $payment = $this->paypal()->transactions()->search(self::at('2026-11-18'), self::at('2026-11-18 02:00:00'))->transactions[11];
+
+        $this->assertTrue($payment->isSubscriptionPayment());
+        $this->assertSame('I-AKYE3A6CY2YH', $payment->referenceId);
+        $this->assertSame('RP', $payment->referenceIdType);
+        $this->assertNull($payment->customField, 'the button\'s custom does not arrive');
+        $this->assertSame('Account Upgrade: Premium (harness)', $payment->subject, 'the button\'s item_name');
     }
 
     public function testEventCodesClassifyARow(): void
     {
         $this->pushFixture('transactions');
 
-        $rows = $this->paypal()->transactions()->search(self::at('2026-08-01'), self::at('2026-08-31'))->transactions;
-        $payment = $rows[0];
-        $conversionOut = $rows[1];
-        $conversionIn = $rows[2];
+        $rows = $this->paypal()->transactions()->search(self::at('2026-11-18'), self::at('2026-11-18 02:00:00'))->transactions;
+        $payment = $rows[1];
+        $conversionOut = $rows[2];
+        $conversionIn = $rows[3];
 
         $this->assertTrue($payment->isPayment());
-        $this->assertTrue($payment->isSubscriptionPayment());
+        $this->assertFalse($payment->isSubscriptionPayment());
+        $this->assertTrue($rows[10]->isSubscriptionPayment());
         $this->assertFalse($payment->isCurrencyConversion());
         $this->assertSame('T00', $payment->eventGroup());
+        $this->assertSame('4.00 USD', (string) $payment->amount);
+        $this->assertSame('-0.44 USD', (string) $payment->fee);
 
         $this->assertTrue($conversionOut->isCurrencyConversion());
         $this->assertFalse($conversionOut->isPayment());
-        $this->assertSame($payment->id, $conversionIn->referenceId, 'the rows that belong together share a reference id');
-        $this->assertNull($conversionOut->payer, 'an empty payer_info is no payer');
+        $this->assertSame('-3.56 USD', (string) $conversionOut->amount, 'the net, out of USD');
+        $this->assertSame('5.01 AUD', (string) $conversionIn->amount);
+        $this->assertNull($conversionOut->fee);
+        $this->assertSame($payment->id, $conversionOut->referenceId, 'a conversion names the payment\'s id');
+        $this->assertSame($payment->id, $conversionIn->referenceId);
+        $this->assertNotSame($payment->referenceId, $conversionIn->referenceId, 'not the payment\'s own reference');
+        $this->assertNull($conversionOut->payer?->email, 'a conversion row has no payer to speak of');
     }
 
     public function testBalances(): void
     {
         $this->pushFixture('balances');
 
-        $balances = $this->paypal()->transactions()->balances(self::at('2026-09-15 09:00:00'), 'aud');
+        $balances = $this->paypal()->transactions()->balances(self::at('2026-11-18 02:00:00'), 'aud');
 
-        $this->assertSame(['as_of_time' => '2026-09-15T09:00:00Z', 'currency_code' => 'AUD'], $this->sentQuery());
-        $this->assertSame('1543.21', $balances->primary()?->total?->value);
-        $this->assertSame('43.21', $balances->inCurrency('aud')?->withheld?->value);
-        $this->assertNull($balances->inCurrency('USD')?->available);
+        $this->assertSame(['as_of_time' => '2026-11-18T02:00:00Z', 'currency_code' => 'AUD'], $this->sentQuery());
+        $this->assertSame('4015.15', $balances->inCurrency('aud')?->total?->value);
+        $this->assertSame('0.00', $balances->inCurrency('AUD')?->withheld?->value);
+        $this->assertSame('689.38 USD', (string) $balances->inCurrency('USD')?->available);
         $this->assertNull($balances->inCurrency('EUR'));
+        $this->assertSame('2026-11-18T01:59:59+00:00', $balances->asOf?->format(DATE_ATOM));
+        $this->assertNull($balances->primary(), 'the sandbox sent no primary flag');
+    }
+
+    public function testThePrimaryBalanceIsTheOneFlagged(): void
+    {
+        $this->client->pushJson(200, ['balances' => [
+            ['currency' => 'USD', 'total_balance' => ['currency_code' => 'USD', 'value' => '1.00']],
+            ['currency' => 'AUD', 'primary' => true, 'total_balance' => ['currency_code' => 'AUD', 'value' => '2.00']],
+        ]]);
+
+        $this->assertSame('AUD', $this->paypal()->transactions()->balances()->primary()?->currency);
     }
 
     public function testWithIdIncludesNonBalanceAffectingRows(): void

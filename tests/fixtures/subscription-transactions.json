@@ -1,20 +1,19 @@
 {
     "transactions": [
         {
-            "status": "COMPLETED",
-            "id": "5TY05013RG002845M",
+            "id": "3DR34135EM370681V",
             "amount_with_breakdown": {
                 "gross_amount": {
                     "currency_code": "USD",
-                    "value": "110.00"
+                    "value": "10.00"
                 },
                 "fee_amount": {
                     "currency_code": "USD",
-                    "value": "4.62"
+                    "value": "0.64"
                 },
                 "net_amount": {
                     "currency_code": "USD",
-                    "value": "105.38"
+                    "value": "9.36"
                 }
             },
             "payer_name": {
@@ -22,10 +21,15 @@
                 "surname": "Example"
             },
             "payer_email": "buyer@example.com",
-            "time": "2026-08-03T22:15:07Z"
+            "time": "2026-11-18T01:44:05.000Z",
+            "status": "COMPLETED"
         }
     ],
-    "total_items": 1,
-    "total_pages": 1,
-    "links": []
+    "links": [
+        {
+            "href": "https://api-m.sandbox.paypal.com/v1/billing/subscriptions/I-ETC83DNY7VWA/transactions?start_time=2026-11-17T00%3A00%3A00Z&end_time=2026-11-19T00%3A00%3A00Z",
+            "rel": "SELF",
+            "method": "GET"
+        }
+    ]
 }

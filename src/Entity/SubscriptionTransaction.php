@@ -11,7 +11,7 @@ use Hampel\PayPal\Api\Support\Cast;
  * One payment a subscription made, from `GET /v1/billing/subscriptions/{id}/transactions`.
  *
  * Its `id` is the payment's transaction id - the same id transaction search reports for the
- * `T0002` row, by PayPal's description, and unmeasured.
+ * `T0002` row, measured on 2026-11-18. Its fee is positive here; transaction search's is negative.
  */
 final class SubscriptionTransaction extends Entity
 {

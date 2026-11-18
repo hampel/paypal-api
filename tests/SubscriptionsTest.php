@@ -15,21 +15,33 @@ final class SubscriptionsTest extends TestCase
     {
         $this->pushFixture('subscription');
 
-        $subscription = $this->paypal()->subscriptions()->get('I-BW452GLLEP1G');
+        $subscription = $this->paypal()->subscriptions()->get('I-ETC83DNY7VWA');
 
-        $this->assertSame('/v1/billing/subscriptions/I-BW452GLLEP1G', $this->sentPath());
+        $this->assertSame('/v1/billing/subscriptions/I-ETC83DNY7VWA', $this->sentPath());
         $this->assertSame([], $this->sentQuery());
         $this->assertSame(SubscriptionStatus::Active, $subscription->subscriptionStatus());
         $this->assertTrue($subscription->isActive());
-        $this->assertSame('P-5ML4271244454362WXNWU5NQ', $subscription->planId);
-        $this->assertSame('a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6', $subscription->customId);
+        $this->assertSame('P-51P886905C292613SNL6PW5Q', $subscription->planId);
+        $this->assertSame('harness-20261118T013634Z', $subscription->customId);
         $this->assertSame('Alex Example', $subscription->subscriber?->name());
-        $this->assertSame('6STWC2LSUYYYE', $subscription->subscriber->payerId);
+        $this->assertSame('QYR5Z8XDVJNXQ', $subscription->subscriber->payerId);
         $this->assertNotNull($subscription->billing);
-        $this->assertSame('110.00 USD', (string) $subscription->billing->lastPaymentAmount);
-        $this->assertSame('2027-08-03', $subscription->billing->nextBillingAt?->format('Y-m-d'));
+        $this->assertSame('10.0 USD', (string) $subscription->billing->lastPaymentAmount, 'one decimal place, as sent');
+        $this->assertSame('2026-11-19T10:00:00+00:00', $subscription->billing->nextBillingAt?->format(DATE_ATOM));
         $this->assertSame(0, $subscription->billing->failedPaymentsCount);
         $this->assertNull($subscription->plan);
+    }
+
+    public function testAPayPalStandardSubscriptionHasNoPlanAndNoCustomId(): void
+    {
+        $this->pushFixture('subscription-standard');
+
+        $subscription = $this->paypal()->subscriptions()->get('I-AKYE3A6CY2YH');
+
+        $this->assertTrue($subscription->isActive());
+        $this->assertNull($subscription->planId);
+        $this->assertNull($subscription->customId);
+        $this->assertSame('10.0 USD', (string) $subscription->billing?->lastPaymentAmount);
     }
 
     public function testOptionalSectionsAreAskedForByName(): void
@@ -53,17 +65,18 @@ final class SubscriptionsTest extends TestCase
         $this->pushFixture('subscription-transactions');
 
         $transactions = $this->paypal()->subscriptions()->transactions(
-            'I-BW452GLLEP1G',
-            new \DateTimeImmutable('2026-08-01T00:00:00Z'),
-            new \DateTimeImmutable('2026-09-01T00:00:00Z')
+            'I-ETC83DNY7VWA',
+            new \DateTimeImmutable('2026-11-17T00:00:00Z'),
+            new \DateTimeImmutable('2026-11-19T00:00:00Z')
         );
 
-        $this->assertSame('/v1/billing/subscriptions/I-BW452GLLEP1G/transactions', $this->sentPath());
-        $this->assertSame(['start_time' => '2026-08-01T00:00:00Z', 'end_time' => '2026-09-01T00:00:00Z'], $this->sentQuery());
+        $this->assertSame('/v1/billing/subscriptions/I-ETC83DNY7VWA/transactions', $this->sentPath());
+        $this->assertSame(['start_time' => '2026-11-17T00:00:00Z', 'end_time' => '2026-11-19T00:00:00Z'], $this->sentQuery());
         $this->assertCount(1, $transactions);
+        $this->assertSame('3DR34135EM370681V', $transactions[0]->id, 'the T0002 row\'s id in transaction search');
         $this->assertSame(CaptureStatus::Completed, $transactions[0]->captureStatus());
-        $this->assertSame('4.62', $transactions[0]->fee?->value);
-        $this->assertSame('105.38', $transactions[0]->net?->value);
+        $this->assertSame('0.64', $transactions[0]->fee?->value, 'positive here, negative in transaction search');
+        $this->assertSame('9.36', $transactions[0]->net?->value);
         $this->assertSame('Alex Example', $transactions[0]->payerName);
     }
 

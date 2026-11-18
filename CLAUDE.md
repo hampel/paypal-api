@@ -141,6 +141,9 @@ conversions beside them. The raw rows are in `CLAUDE.local.md`'s harness runs.
 - **`GET /v1/billing/subscriptions/{id}` knows a Standard-button subscription**: `ACTIVE`, with
   billing info and `next_billing_time`, but no `plan_id` and no `custom_id`. Its amounts come back
   as `"10.0"` — one decimal place, not the currency's two.
+- **`GET /v1/billing/subscriptions/{id}/transactions` reports a payment by the `T0002` row's own
+  id**, with the fee positive (`0.64`) where transaction search has it negative.
+- **`v1/reporting/balances` sent no `primary` flag**, so `AccountBalances::primary()` answered null.
 - **`end_date` and `start_date` are both inclusive**: a one-second window ending, and one
   starting, on a row's own initiation second each found it.
 - **The rows' dates are `Z`**, on a sandbox account; the documented "time zone of the account" has
@@ -255,12 +258,18 @@ src/
 `tests/StubClient.php` is a PSR-18 client answering from a queue — the seam consumers use is the
 seam the suite drives.
 
-**The fixtures are two kinds, and it matters which.** `capture.json`, `refund.json` and
-`not-found.json` are PayPal's own examples from the payments specification. Every other fixture was
-built from the schema, because the other three specifications carry no response examples and
-PayPal's reference pages show placeholders. Their shape is the specification's; their values —
-the fee's sign, the conversion rows beside a payment — are illustrations, not observations. Replace
-them with real sandbox responses as the harness captures them.
+**The fixtures are three kinds, and it matters which.**
+
+| fixture | is |
+|---|---|
+| `transactions.json`, `balances.json`, `subscription.json`, `subscription-standard.json`, `subscription-transactions.json` | real sandbox responses, captured 2026-11-18, with every payer's name, email, phone, address and account id replaced by illustrative values |
+| `capture.json`, `refund.json`, `not-found.json` | PayPal's own examples from the payments specification |
+| `plans.json`, `token.json`, `webhook-event.json`, `webhooks.json` | built from the schema, because those specifications carry no response examples; their values are illustrations, not observations |
+
+Replace the third kind with real responses as the harness captures them, redacted the same way.
+A captured fixture is the one kind whose values can be asserted as facts about PayPal — the fee's
+sign, the conversion rows' reference, a Standard subscription's missing `custom` — and the tests
+say so where they do.
 
 `ReadmeTest` checks every call, class, exception, and prose `Class::method()` the README names.
 `WebhooksTest::testTheEventIsSplicedIntoTheVerificationByteForByte()` uses a body no PHP encoder

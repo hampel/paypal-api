@@ -55,6 +55,10 @@ final class AccountBalances extends Entity
         return null;
     }
 
+    /**
+     * The balance flagged `primary`, as the specification describes. The sandbox sent no such flag
+     * on 2026-11-18, so this answered null there; inCurrency() does not depend on it.
+     */
     public function primary(): ?Balance
     {
         foreach ($this->balances as $balance) {

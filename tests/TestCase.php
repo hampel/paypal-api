@@ -43,8 +43,8 @@ abstract class TestCase extends BaseTestCase
     }
 
     /**
-     * A response body from tests/fixtures - PayPal's own sample where its specification has one,
-     * and built from the schema where it does not.
+     * A response body from tests/fixtures - a redacted sandbox capture, PayPal's own sample, or
+     * built from the schema. CLAUDE.md's Testing section says which is which.
      *
      * @return array<string, mixed>
      */
