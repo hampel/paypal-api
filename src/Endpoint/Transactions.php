@@ -85,11 +85,20 @@ final class Transactions extends Endpoint
      * A WINDOW'S END IS TREATED AS INCLUSIVE, which is what makes the one-second step gapless. Whether
      * PayPal's `end_date` is inclusive is unmeasured; `vendor/bin/rig transactions` asks.
      *
-     * @return \Generator<int, Transaction>
+     * THE GENERATOR RETURNS THE LAST PAGE IT FETCHED, read with getReturn() once the foreach has run
+     * to the end. Its `endDate` is how far the answer actually reached - PayPal cuts a search back to
+     * its last refresh, so that is earlier than $to whenever $to is recent - and `lastRefreshedAt`
+     * how current it is. getReturn() throws on a generator stopped early, as PHP's always does.
+     *
+     * @return \Generator<int, Transaction, mixed, TransactionPage>
      */
     public function each(\DateTimeInterface $from, \DateTimeInterface $to, ?TransactionFilter $filter = null, ?int $pageSize = null): \Generator
     {
-        foreach (self::windows($from, $to) as [$start, $end]) {
+        $windows = self::windows($from, $to);
+
+        // a do-while over a list that is never empty, so there is always a last page to return
+        do {
+            [$start, $end] = array_shift($windows);
             $page = 1;
 
             do {
@@ -97,7 +106,9 @@ final class Transactions extends Endpoint
 
                 yield from $result->transactions;
             } while ($result->hasMore());
-        }
+        } while ($windows !== []);
+
+        return $result;
     }
 
     /**
@@ -129,7 +140,7 @@ final class Transactions extends Endpoint
      * A range split into windows no wider than a single search allows: each `[start, end]`, the end
      * one second before the next start, and the last ending at $to.
      *
-     * @return list<array{\DateTimeImmutable, \DateTimeImmutable}>
+     * @return non-empty-list<array{\DateTimeImmutable, \DateTimeImmutable}>
      */
     public static function windows(\DateTimeInterface $from, \DateTimeInterface $to): array
     {
@@ -138,12 +149,13 @@ final class Transactions extends Endpoint
         $windows = [];
         $start = $from;
 
-        while ($start <= $to) {
+        // range() has refused $from after $to, so the first window always exists
+        do {
             $next = $start->modify(sprintf('+%d seconds', self::MAX_RANGE_DAYS * 86400));
             $end = min($next->modify('-1 second'), $to);
             $windows[] = [$start, $end];
             $start = $next;
-        }
+        } while ($start <= $to);
 
         return $windows;
     }

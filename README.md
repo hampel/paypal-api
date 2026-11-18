@@ -105,8 +105,19 @@ $balances->inCurrency('AUD')?->available;
 PayPal documents two more limits that shape a reconciliation:
 
 - **A transaction takes up to three hours to appear.** Look back over time already covered rather
-  than starting where the last run stopped; `TransactionPage::$lastRefreshedAt` says how current an
-  answer is.
+  than starting where the last run stopped. PayPal cuts a search's end back to its last refresh
+  without saying so, so how far an answer reached is the page's `TransactionPage::$endDate`, not the
+  end asked for. `each()` returns its last page once the loop has finished:
+
+  ```php
+  $rows = $paypal->transactions()->each($from, $to);
+
+  foreach ($rows as $row) {
+      // ...
+  }
+
+  $rows->getReturn()->endDate;            // how far PayPal's data reached
+  ```
 - **History goes back three years**, and no further.
 
 ### Filters

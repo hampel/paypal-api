@@ -186,6 +186,23 @@ final class TransactionsTest extends TestCase
         $this->assertSame('1', $third['page']);
     }
 
+    public function testEachReturnsTheLastPageSoACallerKnowsHowFarTheAnswerReached(): void
+    {
+        $this->client->pushJson(200, self::page([self::row('A')]));
+        $this->client->pushJson(200, self::page([self::row('B')]) + [
+            'end_date' => '2026-02-09T22:59:59+0000',
+            'last_refreshed_datetime' => '2026-02-09T22:59:59+0000',
+        ]);
+
+        $rows = $this->paypal()->transactions()->each(self::at('2026-01-01'), self::at('2026-02-10'));
+        iterator_to_array($rows, false);
+
+        $last = $rows->getReturn();
+
+        $this->assertSame('2026-02-09T22:59:59+00:00', $last->endDate?->format(DATE_ATOM));
+        $this->assertSame('2026-02-09T22:59:59+00:00', $last->lastRefreshedAt?->format(DATE_ATOM));
+    }
+
     public function testStoppingEarlyStopsTheRequests(): void
     {
         $this->client->pushJson(200, self::page([self::row('A'), self::row('B')], 5));

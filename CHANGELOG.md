@@ -12,7 +12,8 @@ webhook signature verification. Every wrapped operation reads.
   elsewhere; `Client::verify()` and `AccessGrant::canSearchTransactions()`
 - endpoints: `Transactions`, `Captures`, `Refunds`, `Subscriptions`, `Plans`, `Webhooks`,
   `Authorisation`
-- `Transactions::each()`, walking any range in 31-day windows, and `TransactionFilter`
+- `Transactions::each()`, walking any range in 31-day windows and returning the last page, whose
+  `endDate` says how far the answer reached; and `TransactionFilter`
 - `Money`, keeping PayPal's decimal strings and adding, comparing and counting minor units exactly
 - `WebhookNotification`, verifying against the raw body as it arrived
 - readonly entities for every response mapped, each keeping what PayPal sent on `raw`
