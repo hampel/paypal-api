@@ -14,15 +14,17 @@ use Hampel\PayPal\Api\Support\Cast;
 /**
  * Transaction search and balances, at `/v1/reporting`.
  *
- * FOUR DOCUMENTED LIMITS SHAPE THIS CLASS, all from PayPal's specification and none yet measured:
+ * FOUR DOCUMENTED LIMITS SHAPE THIS CLASS, all from PayPal's specification; only the lag is
+ * measured so far:
  *
  *  - ONE SEARCH SPANS AT MOST 31 DAYS. search() refuses a wider range before sending it; each()
  *    walks any range in 31-day windows.
  *  - HISTORY GOES BACK THREE YEARS. Nothing older is returned, and nothing here pretends otherwise.
  *  - A TRANSACTION TAKES UP TO THREE HOURS TO APPEAR. A run that searches up to "now" has not seen
  *    the last three hours, so a reconciliation looks back over a window it has already covered
- *    rather than starting where the last run stopped. TransactionPage::$lastRefreshedAt says how
- *    current an answer is.
+ *    rather than starting where the last run stopped. MEASURED on 2026-11-18: PayPal cuts a
+ *    search's end back to its last refresh, silently, so TransactionPage::$endDate - not the end
+ *    asked for - is how far an answer reaches, and $lastRefreshedAt how current it is.
  *  - THE APP NEEDS TRANSACTION SEARCH ENABLED in PayPal's developer dashboard, or the search is
  *    refused - see NotPermittedException.
  */

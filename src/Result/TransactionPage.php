@@ -16,17 +16,22 @@ use Hampel\PayPal\Api\Support\Cast;
  *      "total_pages": 1, "links": [...]}
  *
  * UNLIKE MOST LISTS, A SEARCH HAS A TOTAL, so hasMore() is arithmetic on the page that was asked for
- * against `total_pages`. The response's own `page` is kept as `reportedPage` rather than trusted:
- * the specification calls it "a zero-relative index" while the request's page counts from 1, and
- * which of those the API writes is unmeasured.
+ * against `total_pages`. The response's own `page` is kept as `reportedPage`: the specification
+ * calls it "a zero-relative index", but the sandbox was measured on 2026-11-18 writing 1 for the
+ * first page, as the request counts.
  *
  * `lastRefreshedAt` is when PayPal's reporting data was last brought up to date. A transaction
- * newer than that is not in the answer yet - PayPal documents the lag as up to three hours.
+ * newer than that is not in the answer yet - PayPal documents the lag as up to three hours. MEASURED:
+ * a search whose end is later than that comes back with `endDate` cut back to it, without an error,
+ * so `endDate` - not the end that was asked for - is how far the answer reaches.
  *
  * @implements \IteratorAggregate<int, Transaction>
  */
 final class TransactionPage implements \Countable, \IteratorAggregate, \JsonSerializable
 {
+    /**
+     * Measured on 2026-11-18: 501 answers 400 INVALID_REQUEST.
+     */
     public const MAX_PAGE_SIZE = 500;
 
     /**

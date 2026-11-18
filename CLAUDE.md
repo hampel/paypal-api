@@ -89,6 +89,21 @@ Against a sandbox app, with the harness. Where a docblock says "measured", it me
   Authentication failed"}`** and nothing else; `NotAuthenticatedException::oauthError()` reads it.
   The response carries `PayPal-Debug-Id` and no rate-limit header.
 
+### Transaction search, an empty window — `transactions`, 2026-11-18
+
+The window held no rows, because the payments made that morning were newer than PayPal's reporting
+data, so the fee, layout and date questions are still open.
+
+- **`end_date` is cut back to `last_refreshed_datetime`.** Asked for a window ending at the moment
+  of the request, PayPal answered with `end_date` set to `last_refreshed_datetime`, 1.8 hours
+  earlier, and no error. A search that ends at "now" has not covered the last hour or more, and the
+  response's own `end_date` is the only place that says how much it did cover.
+- **500 is the largest page.** `page_size=501` answers 400 `INVALID_REQUEST`, naming `/page_size`.
+- **The response's `page` counts from 1**, as the request does, not from zero as the specification
+  says.
+- Dates in the response's own fields came back as `Z`, echoing the request. The rows' dates are
+  not seen yet.
+
 ## Documented, not measured
 
 Every other behaviour the code relies on comes from the specifications or PayPal's reference pages,
@@ -99,9 +114,8 @@ settles one, move it into Measured with its date, correct the docblock that stat
 | question | code that assumes an answer | exercise |
 |---|---|---|
 | whether a token requested after the app's features change carries the new scopes before the old token expires | `AccessGrant`, `NotPermittedException` docblocks | none — needs a dashboard change |
-| whether 31 days is the limit, and 500 the largest page | `Transactions::MAX_RANGE_DAYS`, `TransactionPage::MAX_PAGE_SIZE` | `transactions` |
+| whether 31 days is the limit — the 2026-11-18 probe could not tell, since PayPal had already cut its end date back | `Transactions::MAX_RANGE_DAYS` | `transactions` |
 | **whether `end_date` is inclusive** | the one-second step in `Transactions::windows()` | `transactions` |
-| whether a response's `page` counts from zero | `TransactionPage::$reportedPage` is kept, not trusted | `transactions` |
 | **the sign and currency of a fee, and how a foreign-currency payment is laid out** | nothing assumes it; this is the reconciliation's main question | `transactions`, `payments` |
 | **how a USD payment lands on an AUD-primary account that holds a USD balance** — one row, or a payment beside `T0200`-series conversions | nothing assumes it | `transactions` |
 | which offset form dates arrive in | `Cast::datetime()` parses both | `transactions` |
