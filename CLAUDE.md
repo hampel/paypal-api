@@ -107,8 +107,9 @@ data, so the fee, layout and date questions are still open.
   it back: HTTP 200, the range echoed as asked. The documented limit is not enforced at the second;
   how far past it PayPal goes is unprobed. `Transactions::search()` still refuses past 31 days,
   which costs a caller nothing, since `each()` walks windows.
-- **The sandbox's reporting data moved forward by one hour between two runs an hour apart**, each
-  time to an `hh:59:59` boundary, 1.8 hours behind the request.
+- **The sandbox's reporting data advances in steps, not continuously**: across three runs on
+  2026-11-18 `last_refreshed_datetime` was `22:59:59Z`, `23:59:59Z`, then `00:29:59Z` — 1.8 to 2.1
+  hours behind each request. The step and the schedule are not settled.
 
 ## Documented, not measured
 
