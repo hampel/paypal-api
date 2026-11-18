@@ -126,9 +126,11 @@ conversions beside them. The raw rows are in `CLAUDE.local.md`'s harness runs.
   (`5.01` AUD). **Both conversion rows name the payment's `transaction_id` as their
   `paypal_reference_id`** — not the payment's own reference id, which is a different `TXN` id. A
   USD payment the account keeps in USD is one row, and so was every `T0002`.
-- **Holding a USD balance did not by itself stop the conversion.** A payment at 00:37Z converted
-  with 667.10 USD already in the account; one at 00:47Z did not. What changed between them is
-  the account's own setting, not anything in the API.
+- **The receiving account's conversion setting decides, and nothing else does.** A payment at
+  00:37Z converted although the account already held 667.10 USD and the payer had chosen to send
+  USD only. Before the next, at 00:47Z, the business account's setting to convert foreign-currency
+  payments automatically was turned off, and that payment stayed USD. The API shows only the
+  outcome — the conversion rows, or their absence.
 - **A `T0002` row's `paypal_reference_id` is the subscription id, type `RP`** — `I-…` — for a
   REST subscription and for one made by a Standard button alike.
 - **`custom_field` carries a REST subscription's `custom_id`. A Standard button's `custom` does
