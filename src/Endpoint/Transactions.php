@@ -18,7 +18,8 @@ use Hampel\PayPal\Api\Support\Cast;
  * measured so far:
  *
  *  - ONE SEARCH SPANS AT MOST 31 DAYS. search() refuses a wider range before sending it; each()
- *    walks any range in 31-day windows.
+ *    walks any range in 31-day windows. Measured on 2026-11-18, the sandbox accepted 31 days and a
+ *    second, so the refusal here is the documented limit, slightly stricter than the enforced one.
  *  - HISTORY GOES BACK THREE YEARS. Nothing older is returned, and nothing here pretends otherwise.
  *  - A TRANSACTION TAKES UP TO THREE HOURS TO APPEAR. A run that searches up to "now" has not seen
  *    the last three hours, so a reconciliation looks back over a window it has already covered

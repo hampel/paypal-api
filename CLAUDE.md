@@ -103,6 +103,12 @@ data, so the fee, layout and date questions are still open.
   says.
 - Dates in the response's own fields came back as `Z`, echoing the request. The rows' dates are
   not seen yet.
+- **31 days and one second is accepted**, on a window ending before the last refresh so nothing cut
+  it back: HTTP 200, the range echoed as asked. The documented limit is not enforced at the second;
+  how far past it PayPal goes is unprobed. `Transactions::search()` still refuses past 31 days,
+  which costs a caller nothing, since `each()` walks windows.
+- **The sandbox's reporting data moved forward by one hour between two runs an hour apart**, each
+  time to an `hh:59:59` boundary, 1.8 hours behind the request.
 
 ## Documented, not measured
 
@@ -114,7 +120,6 @@ settles one, move it into Measured with its date, correct the docblock that stat
 | question | code that assumes an answer | exercise |
 |---|---|---|
 | whether a token requested after the app's features change carries the new scopes before the old token expires | `AccessGrant`, `NotPermittedException` docblocks | none — needs a dashboard change |
-| whether 31 days is the limit — the 2026-11-18 probe could not tell, since PayPal had already cut its end date back | `Transactions::MAX_RANGE_DAYS` | `transactions` |
 | **whether `end_date` is inclusive** | the one-second step in `Transactions::windows()` | `transactions` |
 | **the sign and currency of a fee, and how a foreign-currency payment is laid out** | nothing assumes it; this is the reconciliation's main question | `transactions`, `payments` |
 | **how a USD payment lands on an AUD-primary account that holds a USD balance** — one row, or a payment beside `T0200`-series conversions | nothing assumes it | `transactions` |
