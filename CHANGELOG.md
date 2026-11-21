@@ -1,11 +1,11 @@
 # Changelog
 
-## Unreleased
+## 0.2.0 (2026-11-22)
 
 - `AccessGrant::SUBSCRIPTIONS_SCOPE` and `canReadSubscriptions()`: reading a subscription needs the
   app's Subscriptions feature, and Transaction Search alone is refused
 - docblocks and README: a changed feature reaches a token only once it expires; what a refusal
-  answers on each API; no PayPal app is read-only
+  answers on each API; what a missing subscription answers; no PayPal app is read-only
 
 ## 0.1.0 (2026-11-18)
 
