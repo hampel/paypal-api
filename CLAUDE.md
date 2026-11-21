@@ -104,7 +104,11 @@ this harness.
 - **No app is read-only.** With only those two features ticked the token still carried
   `payments/refund` and other write scopes.
 - **A subscription id is `I-` and twelve characters.** A longer one answers 400
-  `INVALID_REQUEST` (`ValidationException`), not a 404.
+  `INVALID_REQUEST` with an `INVALID_PARAMETER_SYNTAX` issue (`ValidationException`), not a 404.
+- **A well-formed subscription id that does not exist answers 404 `RESOURCE_NOT_FOUND`**, with one
+  detail, issue `INVALID_RESOURCE_ID`, "Requested resource ID was not found.", and no field. Both of
+  `NotFoundException::isMissingResource()`'s conditions hold, and `Subscriptions::find()` answered
+  null.
 
 ### Transaction search, an empty window — `transactions`, 2026-11-18
 
@@ -177,7 +181,7 @@ settles one, move it into Measured with its date, correct the docblock that stat
 |---|---|---|
 | how a fee and a foreign-currency payment look on a captured order rather than Send Money | nothing assumes it | `payments` |
 | whether a payment row's id is its capture id | nothing yet | `payments` |
-| whether `RESOURCE_NOT_FOUND` is what a missing id answers | `NotFoundException::isMissingResource()` | `payments` |
+| whether a missing capture or refund answers `RESOURCE_NOT_FOUND` as a missing subscription does | `NotFoundException::isMissingResource()` | `payments` |
 | what a failed subscription charge and its retry leave behind — a transaction row, a status, or only `failed_payments_count` on the subscription | `FailedPayment` docblock | `subscriptions` |
 | whether a plan list is minimal without `Prefer` | `Plans` always sends it | `subscriptions` |
 | whether a bad signature answers `200 FAILURE` or an error | `Webhooks::verifySignature()` | `webhooks` |
