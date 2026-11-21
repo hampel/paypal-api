@@ -14,6 +14,9 @@ use Hampel\PayPal\Api\Support\Cast;
  *
  * READ-ONLY. Cancelling, suspending and revising a subscription are things the application that
  * sold it does; nothing this package is for needs to, and none is wrapped.
+ *
+ * NEEDS THE SUBSCRIPTIONS FEATURE on the app. Transaction Search alone is refused a subscription
+ * read with 403 `PERMISSION_DENIED` (measured 2026-11-21); `AccessGrant::canReadSubscriptions()`.
  */
 final class Subscriptions extends Endpoint
 {

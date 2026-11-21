@@ -22,10 +22,14 @@ use Hampel\PayPal\Api\Support\Cast;
  * REST app in PayPal's developer dashboard, thirty of them for a sandbox app measured 2026-09-15.
  * That makes it the cheapest answer to "is Transaction Search enabled".
  *
- * IT MAY BE STALE AFTER THE DASHBOARD CHANGES, and forgetting the grant may not help. Measured
- * 2026-09-15, a second token request made while the first token is unexpired answers the SAME
- * token, so asking again can hand back the scopes that token was issued with. Whether PayPal
- * reissues a token with new scopes once the app's features change is unmeasured.
+ * IT IS NOT A LIST OF WHAT THE APP CAN CHANGE BEING ABSENT. Measured 2026-11-21, an app with only
+ * Transaction Search and Subscriptions ticked still carried `payments/refund` and other write
+ * scopes; PayPal has no read-only app. What keeps this package read-only is that it wraps no write.
+ *
+ * IT IS STALE AFTER THE DASHBOARD CHANGES, until the token expires. Measured 2026-11-21:
+ * changing an existing app's features did not reach its token, and asking again answered the same
+ * unexpired token with the old scopes - about nine hours. A new app's first token carries its
+ * features at once.
  *
  * The expiry is stored as an instant rather than as `expires_in`, because a number of seconds
  * means nothing once the grant has sat in a cache for an hour.
@@ -43,6 +47,13 @@ final class AccessGrant implements \JsonSerializable
      * specifications; measured 2026-09-15 on a sandbox app with the feature ticked.
      */
     public const TRANSACTION_SEARCH_SCOPE = 'https://uri.paypal.com/services/reporting/search/read';
+
+    /**
+     * The scope a token carries when its app has Subscriptions enabled, which reading a
+     * subscription needs: measured 2026-11-21, a token with Transaction Search and without this was
+     * refused `GET /v1/billing/subscriptions/{id}` with 403 `PERMISSION_DENIED`.
+     */
+    public const SUBSCRIPTIONS_SCOPE = 'https://uri.paypal.com/services/subscriptions';
 
     public function __construct(
         #[\SensitiveParameter] public readonly string $accessToken,
@@ -125,6 +136,15 @@ final class AccessGrant implements \JsonSerializable
     public function canSearchTransactions(): bool
     {
         return $this->hasScope(self::TRANSACTION_SEARCH_SCOPE);
+    }
+
+    /**
+     * Whether the app had Subscriptions enabled when this token was issued, which `Subscriptions`
+     * needs. `Plans` is the same API and presumably the same feature; that is unmeasured.
+     */
+    public function canReadSubscriptions(): bool
+    {
+        return $this->hasScope(self::SUBSCRIPTIONS_SCOPE);
     }
 
     /**

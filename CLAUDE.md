@@ -81,13 +81,30 @@ Against a sandbox app, with the harness. Where a docblock says "measured", it me
   32399 seconds left moments after issue.
 - **A second token request while the first is unexpired answers the same token.** Processes without
   a shared `TokenStore` cost requests, not extra tokens — and `ClientCredentials::forget()` cannot
-  force a token with new scopes before the old one expires.
+  force a token with new scopes before the old one expires (confirmed 2026-11-21, below).
 - **`AccessGrant::TRANSACTION_SEARCH_SCOPE` is present** on an app with Transaction Search ticked,
-  among thirty scopes. An app without the feature has not been seen, so its absence there is still
-  inferred.
+  among thirty scopes. A token without it was refused on 2026-11-21, below.
 - **A wrong secret answers 401 `{"error": "invalid_client", "error_description": "Client
   Authentication failed"}`** and nothing else; `NotAuthenticatedException::oauthError()` reads it.
   The response carries `PayPal-Debug-Id` and no rate-limit header.
+
+### Features and refusals — a consumer's sandbox apps, 2026-11-21
+
+Measured by an application built on this package, against three sandbox apps of its own, not by
+this harness.
+
+- **A changed feature does not reach an existing token.** Ticking a feature on an existing app left
+  its token's scopes as they were, and asking again answered the same unexpired token, for about
+  nine hours. A new app's first token carried its features at once.
+- **Reading a subscription needs Subscriptions ticked**, which adds
+  `AccessGrant::SUBSCRIPTIONS_SCOPE`. With Transaction Search alone (16 scopes),
+  `GET /v1/billing/subscriptions/{id}` answered 403 `PERMISSION_DENIED`; with both, 17.
+- **A refused transaction search or balances read answers 403 `NOT_AUTHORIZED`**, and a refused
+  subscription read 403 `PERMISSION_DENIED`. Both are `NotPermittedException`.
+- **No app is read-only.** With only those two features ticked the token still carried
+  `payments/refund` and other write scopes.
+- **A subscription id is `I-` and twelve characters.** A longer one answers 400
+  `INVALID_REQUEST` (`ValidationException`), not a 404.
 
 ### Transaction search, an empty window — `transactions`, 2026-11-18
 
@@ -158,9 +175,7 @@ settles one, move it into Measured with its date, correct the docblock that stat
 
 | question | code that assumes an answer | exercise |
 |---|---|---|
-| whether a token requested after the app's features change carries the new scopes before the old token expires | `AccessGrant`, `NotPermittedException` docblocks | none — needs a dashboard change |
 | how a fee and a foreign-currency payment look on a captured order rather than Send Money | nothing assumes it | `payments` |
-| what a refused Transaction Search looks like | `NotPermittedException` docblock | `transactions` |
 | whether a payment row's id is its capture id | nothing yet | `payments` |
 | whether `RESOURCE_NOT_FOUND` is what a missing id answers | `NotFoundException::isMissingResource()` | `payments` |
 | what a failed subscription charge and its retry leave behind — a transaction row, a status, or only `failed_payments_count` on the subscription | `FailedPayment` docblock | `subscriptions` |

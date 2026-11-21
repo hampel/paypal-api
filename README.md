@@ -68,19 +68,26 @@ Implement the three-method interface over a cache; `AccessGrant::toArray()` and
 `AccessGrant::fromArray()` are the portable form.
 
 **The app decides which account is read** — a REST app belongs to one PayPal account — and **which
-APIs it may use.** Transaction search in particular needs **Transaction Search** ticked in the
-app's features, and the token's scope says whether it was:
+APIs it may use.** Transaction search and balances need **Transaction Search** ticked in the
+app's features, reading a subscription needs **Subscriptions**, and the token's scope says which
+were:
 
 ```php
 $grant = $paypal->verify();          // one token request, or none if the store has one
 
 $grant->canSearchTransactions();     // was Transaction Search enabled when this token was issued?
+$grant->canReadSubscriptions();      // and Subscriptions?
 $grant->scopes();
 ```
 
-**A change to the app's features may take until the token expires to show.** PayPal answers a
+**A change to the app's features takes until the token expires to show.** PayPal answers a
 repeated token request with the same unexpired token, so `ClientCredentials::forget()` makes the
-client ask again but may get the old scopes back. A token lasts nine hours.
+client ask again and gets the old scopes back. A token lasts nine hours; a new app's first token
+has its features at once.
+
+**No app is read-only.** One with only Transaction Search and Subscriptions ticked still carries
+refund and other write scopes. This package is read-only because it wraps no write, not because of
+the credential.
 
 ## Transaction search
 
@@ -255,7 +262,7 @@ Every exception implements `ExceptionInterface`.
 | `RequestException` | PayPal never answered — DNS, TLS, a timeout |
 | `ValidationException` | 400 — the request is malformed |
 | `NotAuthenticatedException` | 401 — the credential or token was refused |
-| `NotPermittedException` | 403 — the app lacks the feature, Transaction Search usually |
+| `NotPermittedException` | 403 — the app lacks the feature: Transaction Search, or Subscriptions |
 | `NotFoundException` | 404 |
 | `UnprocessableException` | 422 — a business rule refused it |
 | `TooManyRequestsException` | 429 |

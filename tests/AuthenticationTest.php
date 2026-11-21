@@ -254,6 +254,12 @@ final class AuthenticationTest extends TestCase
         $this->assertFalse(AccessGrant::fromResponse($this->tokenBody(), $this->now)->canSearchTransactions());
     }
 
+    public function testTheScopeSaysWhetherSubscriptionsAreEnabled(): void
+    {
+        $this->assertTrue(AccessGrant::fromResponse(self::fixture('token'), $this->now)->canReadSubscriptions());
+        $this->assertFalse(AccessGrant::fromResponse($this->tokenBody(), $this->now)->canReadSubscriptions());
+    }
+
     public function testVerifyAnswersTheGrant(): void
     {
         $this->pushFixture('token');
